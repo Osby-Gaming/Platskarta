@@ -1,4 +1,4 @@
-import { Cell, CellStyleOverride, MapLayout, PureCell } from "./types";
+import type { Cell, CellStyleOverride, MapLayout, PureCell } from "./types";
 
 type Action = "changeAttribute" | "swappedCell" | "swappedCells";
 
@@ -46,22 +46,46 @@ export class MapLayoutHistory {
 
         const entry = this.history[this.i];
 
+        if (entry === undefined) {
+            console.error("Cannot undo when no history entry is present for desired step.")
+
+            return;
+        }
+
         if (entry.action === "swappedCell") {
             this.mapLayout.cells[entry.index] = entry.was;
         } else if (entry.action === "changeAttribute") {
-            if (this.mapLayout.cells[entry.index] === null) {
+            const cell = this.mapLayout.cells[entry.index];
+
+            if (cell === undefined || cell === null) {
+                console.error("Cannot change attribute on cell that doesn't exist");
+
                 return;
             }
-            // @ts-expect-error
-            this.mapLayout.cells[entry.index][entry.attribute] = entry.was;
+
+            cell[entry.attribute] = entry.was;
         } else if (entry.action === "changeAttributes") {
             for (let i = 0; i < entry.index.length; i++) {
-                if (this.mapLayout.cells[entry.index[i]] === null) {
+                const cellIndex = entry.index[i];
+                if (cellIndex === undefined || this.mapLayout.cells[cellIndex] === null) {
                     return;
                 }
 
-                // @ts-expect-error
-                this.mapLayout.cells[entry.index[i]][entry.attribute] = entry.was[i];
+                const cell = this.mapLayout.cells[cellIndex];
+
+                if (cell === undefined || cell === null) {
+                    console.error("Cannot change attribute on cell that doesn't exist");
+
+                    return;
+                }
+
+                const was = entry.was[i];
+
+                if (was === undefined) {
+                    console.error("Cannot change attribute with undefined was.");
+                }
+
+                cell[entry.attribute] = was;
             }
         } else if (entry.action === "swappedCells") {
             for (let i = 0; i < entry.index.length; i++) {
@@ -77,6 +101,12 @@ export class MapLayoutHistory {
 
         const entry = this.history[this.i];
 
+        if (entry === undefined) {
+            console.error("Cannot redo when no history entry is present for desired step.")
+
+            return;
+        }
+
         if (entry.action === "swappedCell") {
             this.mapLayout.cells[entry.index] = entry.became;
         } else if (entry.action === "changeAttribute") {
@@ -84,7 +114,6 @@ export class MapLayoutHistory {
                 return;
             }
 
-            // @ts-expect-error
             this.mapLayout.cells[entry.index][entry.attribute] = entry.became;
         } else if (entry.action === "changeAttributes") {
             for (let i = 0; i < entry.index.length; i++) {
@@ -92,7 +121,6 @@ export class MapLayoutHistory {
                     return;
                 }
 
-                // @ts-expect-error
                 this.mapLayout.cells[entry.index[i]][entry.attribute] = entry.became[i];
             }
         } else if (entry.action === "swappedCells") {

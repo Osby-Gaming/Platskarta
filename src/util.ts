@@ -11,7 +11,7 @@ export class FPSCounter {
         this.frames.push(now);
 
         // Remove frames older than 1 second
-        while (this.frames.length > 0 && this.frames[0] <= now - 1000) {
+        while (this.frames.length > 0 && this.frames[0] !== undefined && this.frames[0] <= now - 1000) {
             this.frames.shift();
         }
 
